@@ -158,6 +158,24 @@ contract Presale is
         to.transfer(amount);
     }
 
+    function tokenListOfOwner(
+        address owner,
+        uint256 page,
+        uint256 pageSize
+    ) external view returns (uint256[] memory) {
+        uint256 startIndex = (page - 1) * pageSize;
+        uint256 endIndex = page * pageSize;
+        uint256 balance = balanceOf(owner);
+        if (startIndex >= balance) {
+            return new uint256[](0);
+        }
+        if (balance < endIndex) {
+            endIndex = balance;
+        }
+
+        return this.tokensOfOwnerIn(owner, startIndex, endIndex);
+    }
+
     function _mint(uint256 quantity)
         internal
         returns (uint256)
