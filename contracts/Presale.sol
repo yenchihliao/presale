@@ -35,21 +35,18 @@ contract Presale is
     address public paymentContract;
 
     event BatchMinted(uint256 quantity, uint256 startIndex);
-    event Withdrawn(address token, address to, uint256 amount);
+    event WithdrawnFromToken(address token, address to, uint256 amount);
     event Withdrawn(address to, uint256 amount);
 
     error ExceedBatchMintLimit();
     error ExceedTokenSupplyLimit();
     error InValidPaymentContract();
 
-    constructor() {
-        _disableInitializers();
-    }
-
     function initialize(
         string memory newName,
         string memory newSymbol,
-        address newAdmin
+        address newAdmin,
+        uint256 _tokenPrice
     ) public initializerERC721A initializer {
         __ERC721A_init(newName, newSymbol);
         __ERC721AQueryable_init();
@@ -57,6 +54,7 @@ contract Presale is
         __Pausable_init();
         __UUPSUpgradeable_init();
         __ReentrancyGuard_init();
+        tokenPrice = _tokenPrice;
 
         _grantRole(DEFAULT_ADMIN_ROLE, newAdmin);
     }
@@ -89,7 +87,7 @@ contract Presale is
     {
         if (
             _paymentContract == address(0) ||
-                !paymentContract.isContract()
+                !_paymentContract.isContract()
         ) {
             revert InValidPaymentContract();
         }
@@ -124,7 +122,7 @@ contract Presale is
     }
 
     // @dev: user function
-    function checkTokenAndMint() external nonReentrant {
+    function mint() external nonReentrant {
         // _checkToken(uuid, userAddress, deadline, level, uri, signature);
         uint256 amount = _mint(1);
         IERC20Upgradeable(paymentContract)
@@ -142,12 +140,12 @@ contract Presale is
         _mint(quantity);
     }
 
-    function withdraw(
+    function withdrawFromToken(
         address token,
         address to,
         uint256 amount
     ) external onlyRole(WITHDRAWER_ROLE) {
-        emit Withdrawn(token, to, amount);
+        emit WithdrawnFromToken(token, to, amount);
         IERC20Upgradeable(token).safeTransfer(to, amount);
     }
     function withdraw(
